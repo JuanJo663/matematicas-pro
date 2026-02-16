@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Estadística Pro | Tutoría Personalizada</title>
+    
+    <link rel="stylesheet" href="css/styles.css">
+
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h1 style="text-align: center; color: #1a202c;">📊 Calculadoras Estadísticas Modulares</h1>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="openTab('tab-binomial')">Distribución Binomial</button>
+        <button class="tab-btn" onclick="openTab('tab-normal')">Distribución Normal</button>
+    </div>
+
+    <div id="tab-binomial" class="content active">
+        <h3>Calculadora Binomial Paso a Paso</h3>
+        <p>Introduce los datos para obtener el procedimiento detallado en LaTeX.</p>
+        
+        <label>Número de ensayos (n):</label>
+        <input type="number" id="bn_n" placeholder="Ej: 10">
+        
+        <label>Probabilidad de éxito (p):</label>
+        <input type="number" step="0.01" id="bn_p" placeholder="Ej: 0.5">
+        
+        <label>Éxitos deseados (k):</label>
+        <input type="number" id="bn_x" placeholder="Ej: 3">
+        
+        <button onclick="ejecutarBinomial()">Calcular Distribución Binomial</button>
+        <div id="res_binomial" class="result-box"></div>
+    </div>
+
+    <div id="tab-normal" class="content">
+        <h3>Distribución Normal Estándar</h3>
+        <p>Cálculo de probabilidad acumulada bajo la campana de Gauss.</p>
+        
+        <label>Valor de puntuación Z:</label>
+        <input type="number" step="0.01" id="norm_z" placeholder="Ej: 1.96">
+        
+        <button onclick="ejecutarNormal()">Calcular Probabilidad Normal</button>
+        <div id="res_normal" class="result-box"></div>
+    </div>
+
+    <footer>
+        <hr>
+        <p>¿Necesitas profundizar en estos temas?</p>
+        <p><strong>Clases para todos los estudiantes primaria, bachillerato o universitarios.</strong></p>
+        <a href="https://wa.me/573001234567?text=Hola!%20Necesito%20tutoría%20de%20estadística" class="wa-btn" style="text-decoration: none; color: white; background: #25d366; padding: 10px 20px; border-radius: 8px; display: inline-block; font-weight: bold; margin-top: 10px;">📲 Agendar Clase por WhatsApp</a>
+    </footer>
+</div>
+
+<script src="js/main.js"></script>
+<script src="js/binomial.js"></script>
+<script src="js/normal.js"></script>
+
+</body>
+</html>
