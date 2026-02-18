@@ -1,180 +1,289 @@
-let normalChart = null;
+/* ==========================================================================
+   MÓDULO: DISTRIBUCIÓN NORMAL (V15 - Estándar Platino)
+   Calcula: Probabilidades (CDF) y grafica la Campana de Gauss con áreas
+   ========================================================================== */
 
-// --- Funciones Matemáticas ---
-function cdfNormal(z) {
-    const t = 1 / (1 + 0.2316419 * Math.abs(z));
-    const d = 0.3989423 * Math.exp(-z * z / 2);
-    const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + 1.330274 * t))));
-    return z > 0 ? 1 - p : p;
-}
+const NormalModule = {
 
-function invCDFNormal(p) {
-    const a = [-3.969683028665376e+01, 2.209460984245205e+02, -2.759285104469687e+02, 1.383577518672690e+02, -3.066479806614716e+01, 2.506628277459239e+00];
-    const b = [-5.447609879822406e+01, 1.615858368580409e+02, -1.556989798598866e+02, 6.680131188771972e+01, -1.328068155288572e+01];
-    const c = [-7.784894002430293e-03, -3.223964580411365e-01, -2.400758277161838e+00, -2.549732539343734e+00, 4.374664141464968e+00, 2.938163982698783e+00];
-    const d = [7.784695709041462e-03, 3.224671290700398e-01, 2.445134137142996e+00, 3.754408661907416e+00];
-    let q = p < 0.5 ? p : 1 - p;
-    let x;
-    if (q > 0.02425) {
-        let u = q - 0.5; let t = u * u;
-        x = (((((a[0] * t + a[1]) * t + a[2]) * t + a[3]) * t + a[4]) * t + a[5]) * u / (((((b[0] * t + b[1]) * t + b[2]) * t + b[3]) * t + b[4]) * t + 1);
-    } else {
-        let t = Math.sqrt(-2 * Math.log(q));
-        x = (((((c[0] * t + c[1]) * t + c[2]) * t + c[3]) * t + c[4]) * t + c[5]) / (((((d[0] * t + d[1]) * t + d[2]) * t + d[3]) * t + 1));
-    }
-    return p < 0.5 ? x : -x;
-}
+    render: () => {
+        return `
+        <div class="module-card">
+            <h3 style="color:var(--primary); border-bottom:1px solid var(--border); padding-bottom:10px; margin-top:0;">
+                <i class="fa-solid fa-bell"></i> Distribución Normal
+            </h3>
+            
+            <div style="background:#f8fafc; padding:10px; border-radius:8px; text-align:center; margin-bottom:20px; font-size:0.9rem;">
+                $$ Z = \\frac{x - \\mu}{\\sigma} $$
+                <div style="font-size:0.8rem; color:#666; margin-top:5px;">(Estandarización)</div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Media <span style="text-transform:none; font-family:serif;">( $\\mu$ )</span></label>
+                    <input type="number" id="nm_mu" value="0" placeholder="Ej: 0">
+                </div>
+                <div class="input-group">
+                    <label>Desv. Estándar <span style="text-transform:none; font-family:serif;">( $\\sigma$ )</span></label>
+                    <input type="number" id="nm_sigma" value="1" min="0.0001" step="0.1" placeholder="Ej: 1">
+                </div>
+                
+                <div class="input-group" style="grid-column: span 2;">
+                    <label>Tipo de Cálculo</label>
+                    <select id="nm_type" onchange="NormalModule.toggleInputs()">
+                        <optgroup label="Probabilidad Acumulada">
+                            <option value="menor" selected>Menor que (X < k)</option>
+                            <option value="mayor">Mayor que (X > k)</option>
+                        </optgroup>
+                        <optgroup label="Intervalos">
+                            <option value="entre">Entre (a < X < b)</option>
+                            <option value="colas">Fuera de (X < a ó X > b)</option>
+                        </optgroup>
+                    </select>
+                </div>
 
-// --- Lógica de Gráfico Corregida ---
-function dibujarCampana(mu, sigma, config, callback) {
-    const canvas = document.getElementById('normalChart');
-    const ctx = canvas.getContext('2d');
+                <div id="nm_input_k" class="input-group">
+                    <label>Valor <span style="text-transform:none; font-family:serif;">( k )</span></label>
+                    <input type="number" id="nm_val_k" value="1.96">
+                </div>
+
+                <div id="nm_input_range" class="input-group" style="display:none; grid-column: span 2;">
+                    <div style="display:flex; gap:15px;">
+                        <div style="flex:1">
+                            <label>Límite Inferior <span style="text-transform:none; font-family:serif;">( a )</span></label>
+                            <input type="number" id="nm_val_a" value="-1.96">
+                        </div>
+                        <div style="flex:1">
+                            <label>Límite Superior <span style="text-transform:none; font-family:serif;">( b )</span></label>
+                            <input type="number" id="nm_val_b" value="1.96">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:15px; margin-top:20px;">
+                <button class="btn-action" onclick="NormalModule.calculate()" style="flex:1; margin-top:0;">
+                    <i class="fa-solid fa-calculator"></i> Calcular Resultado
+                </button>
+                <button class="btn-secondary" onclick="NormalModule.generateCurve()" style="flex:1; border: 2px solid var(--primary); color: var(--primary);">
+                    <i class="fa-solid fa-chart-area"></i> Ver Curva Gráfica
+                </button>
+            </div>
+        </div>
+        `;
+    },
+
+    init: () => { NormalModule.toggleInputs(); },
+
+    toggleInputs: () => {
+        const type = document.getElementById('nm_type').value;
+        const divK = document.getElementById('nm_input_k');
+        const divRange = document.getElementById('nm_input_range');
+        if (type === 'entre' || type === 'colas') { 
+            divK.style.display = 'none'; divRange.style.display = 'block'; 
+        } else { 
+            divK.style.display = 'block'; divRange.style.display = 'none'; 
+        }
+    },
+
+    // --- MATEMÁTICAS ---
     
-    // 1. Destrucción total y limpieza del canvas
-    if (normalChart) {
-        normalChart.destroy();
-    }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // CDF Normal Estándar (Aproximación de Abramowitz & Stegun)
+    cdf: (x, mu, sigma) => {
+        const z = (x - mu) / sigma;
+        const t = 1 / (1 + 0.2316419 * Math.abs(z));
+        const d = 0.3989423 * Math.exp(-z * z / 2);
+        let prob = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+        if (z > 0) prob = 1 - prob;
+        return prob;
+    },
 
-    const start = mu - 3.5 * sigma;
-    const end = mu + 3.5 * sigma;
-    const dataPoints = [];
-    const backgroundColors = [];
-    const steps = 150;
-    const stepSize = (end - start) / steps;
+    // PDF Normal (Para dibujar la altura de la curva)
+    pdf: (x, mu, sigma) => {
+        return (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((x - mu) / sigma, 2));
+    },
 
-    for (let i = 0; i <= steps; i++) {
-        let xVal = start + (i * stepSize);
-        let yVal = (1 / (sigma * Math.sqrt(2 * Math.PI))) * Math.exp(-0.5 * Math.pow((xVal - mu) / sigma, 2));
-        dataPoints.push({x: xVal, y: yVal});
+    // CÁLCULO SOLO TEXTO
+    calculate: () => {
+        const mu = parseFloat(document.getElementById('nm_mu').value);
+        const sigma = parseFloat(document.getElementById('nm_sigma').value);
+        const type = document.getElementById('nm_type').value;
 
-        let inArea = false;
-        if (config.tipo === 'menor' && xVal <= config.val1) inArea = true;
-        else if (config.tipo === 'mayor' && xVal >= config.val1) inArea = true;
-        else if (config.tipo === 'entre' && xVal >= config.val1 && xVal <= config.val2) inArea = true;
-        else if (config.tipo === 'inversa' && xVal <= config.val1) inArea = true;
+        if (isNaN(mu) || isNaN(sigma) || sigma <= 0) return alert("Revisa Media y Desviación (σ > 0).");
 
-        backgroundColors.push(inArea ? 'rgba(46, 204, 113, 0.7)' : 'rgba(220, 220, 220, 0.1)');
-    }
+        let res = 0, eqs = [], steps = [];
+        let label = "";
+        
+        let verticalSumHTML = `<div class="vertical-sum-container">`;
 
-    document.getElementById('canvas-container').style.display = 'block';
+        if (type === 'entre' || type === 'colas') {
+            const a = parseFloat(document.getElementById('nm_val_a').value);
+            const b = parseFloat(document.getElementById('nm_val_b').value);
+            if(a >= b) return alert("El límite inferior 'a' debe ser menor que 'b'.");
 
-    normalChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            datasets: [{
-                data: dataPoints,
-                fill: true,
-                segment: { backgroundColor: (ctx) => backgroundColors[ctx.p0DataIndex] },
-                borderColor: '#2c3e50',
-                borderWidth: 2,
-                pointRadius: 0,
-                tension: 0.3
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            animation: false, // Desactivamos para que el callback de imagen sea inmediato
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: 'Distribución Normal' }
-            },
-            scales: {
-                x: {
-                    type: 'linear',
-                    afterBuildTicks: (axis) => {
-                        let tickValues = [mu, config.val1];
-                        if (config.val2 !== null) tickValues.push(config.val2);
-                        axis.ticks = tickValues.map(v => ({value: v}));
-                    },
-                    ticks: {
-                        callback: function(value) {
-                            if (Math.abs(value - mu) < 0.001) return 'μ=' + value;
-                            if (Math.abs(value - config.val1) < 0.001) return 'x1=' + value.toFixed(2);
-                            if (config.val2 !== null && Math.abs(value - config.val2) < 0.001) return 'x2=' + value.toFixed(2);
-                            return '';
-                        }
-                    }
-                },
-                y: { display: false }
+            // Paso 1: Estandarización
+            const zA = (a - mu) / sigma;
+            const zB = (b - mu) / sigma;
+            
+            steps.push(`<strong>Paso 1:</strong> Estandarizar los límites.`);
+            steps.push(`$Z_1 = \\frac{${a} - (${mu})}{${sigma}} = ${zA.toFixed(4)}$`);
+            steps.push(`$Z_2 = \\frac{${b} - (${mu})}{${sigma}} = ${zB.toFixed(4)}$`);
+            
+            // Paso 2: Buscando Probabilidades
+            const pA = NormalModule.cdf(a, mu, sigma);
+            const pB = NormalModule.cdf(b, mu, sigma);
+            
+            steps.push(`<strong>Paso 2:</strong> Buscar probabilidades acumuladas.`);
+            steps.push(`$P(Z < ${zA.toFixed(2)}) = ${pA.toFixed(5)}$`);
+            steps.push(`$P(Z < ${zB.toFixed(2)}) = ${pB.toFixed(5)}$`);
+
+            if(type === 'entre') {
+                res = pB - pA;
+                label = `P(${a} < X < ${b})`;
+                eqs.push(`= P(Z_{${a}} < Z < Z_{${b}})`);
+                eqs.push(`= ${pB.toFixed(5)} - ${pA.toFixed(5)}`);
+                
+                verticalSumHTML += `
+                    <div class="v-row"><span class="v-formula">Límite Superior ($X=${b}$)</span><span class="v-value">${pB.toFixed(5)}</span></div>
+                    <div class="v-row"><span class="v-formula">Límite Inferior ($X=${a}$)</span><span class="v-value">-${pA.toFixed(5)}</span></div>
+                `;
+            } else {
+                // Colas
+                res = 1 - (pB - pA);
+                label = `P(X < ${a} \\cup X > ${b})`;
+                eqs.push(`= 1 - P(${a} < X < ${b})`);
+                eqs.push(`= 1 - (${pB.toFixed(5)} - ${pA.toFixed(5)})`);
+                
+                verticalSumHTML += `
+                    <div class="v-row"><span class="v-formula">Área Central</span><span class="v-value">${(pB-pA).toFixed(5)}</span></div>
+                    <div class="v-row"><span class="v-formula">1 - Área Central</span><span class="v-value">${res.toFixed(5)}</span></div>
+                `;
+            }
+
+        } else {
+            const k = parseFloat(document.getElementById('nm_val_k').value);
+            const prob = NormalModule.cdf(k, mu, sigma);
+            const z = (k - mu) / sigma;
+
+            steps.push(`<strong>Paso 1:</strong> Estandarización.`);
+            steps.push(`$Z = \\frac{${k} - (${mu})}{${sigma}} = ${z.toFixed(4)}$`);
+
+            if (type === 'menor') {
+                res = prob;
+                label = `P(X < ${k})`;
+                eqs.push(`= P(Z < ${z.toFixed(2)})`);
+                verticalSumHTML += `<div class="v-row"><span class="v-formula">Lectura directa de tabla Z</span><span class="v-value">${res.toFixed(5)}</span></div>`;
+            } else {
+                res = 1 - prob;
+                label = `P(X > ${k})`;
+                eqs.push(`= 1 - P(X < ${k})`);
+                eqs.push(`= 1 - ${prob.toFixed(5)}`);
+                verticalSumHTML += `<div class="v-row"><span class="v-formula">Complemento (1 - P)</span><span class="v-value">${res.toFixed(5)}</span></div>`;
             }
         }
-    });
+        
+        verticalSumHTML += `<div class="v-total-line"><span class="v-formula">Resultado</span><span class="v-value">${res.toFixed(5)}</span></div></div>`;
 
-    // Como quitamos la animación, podemos capturar la imagen de inmediato
-    if(callback) {
-        callback(canvas.toDataURL("image/png"));
-    }
-}
+        Core.addReportItem({
+            title: "Cálculo Normal Estándar",
+            params: `μ=${mu}, σ=${sigma} | ${label.replace(/\\le/g, '≤').replace(/\\ge/g, '≥')}`,
+            equations: eqs,
+            steps: steps,
+            customHTML: verticalSumHTML,
+            result: res.toFixed(5),
+            plot: null
+        });
+    },
 
-function ejecutarNormal() {
-    const mu = parseFloat(document.getElementById('norm_mu').value);
-    const sigma = parseFloat(document.getElementById('norm_sigma').value);
-    const tipo = document.getElementById('norm_tipo').value;
-    const resDiv = document.getElementById('res_normal');
-
-    if (isNaN(mu) || isNaN(sigma) || sigma <= 0) {
-        alert("Ingresa valores de Media y Desviación válidos.");
-        return;
-    }
-
-    let pFinal = 0, htmlContenido = "", tituloHistorial = "";
-    let configSombreado = { tipo: tipo, val1: null, val2: null };
-
-    if (tipo === "inversa") {
-        const pVal = document.getElementById('norm_p_inv').value;
-        const p = parseFloat(pVal);
-        if (pVal === "" || isNaN(p) || p <= 0 || p >= 1) {
-            alert("La probabilidad debe ser un número entre 0 y 1.");
-            return;
+    // CÁLCULO + GRÁFICO (MODO FOTO)
+    generateCurve: () => {
+        const mu = parseFloat(document.getElementById('nm_mu').value);
+        const sigma = parseFloat(document.getElementById('nm_sigma').value);
+        const type = document.getElementById('nm_type').value;
+        
+        // Rango de graficación: μ ± 4σ (99.99%)
+        const startX = mu - 4*sigma;
+        const endX = mu + 4*sigma;
+        
+        // Datos de la curva completa
+        const x = [], y = [];
+        const step = (endX - startX) / 100;
+        for(let i = startX; i <= endX; i += step) {
+            x.push(i);
+            y.push(NormalModule.pdf(i, mu, sigma));
         }
-        const z = invCDFNormal(p);
-        const xRes = mu + (z * sigma);
-        pFinal = p;
-        configSombreado.val1 = xRes;
-        htmlContenido = `<p><b>Inversa:</b> P(X < x) = ${p}</p>\\[ x = ${xRes.toFixed(4)} \\]`;
-        tituloHistorial = `Inversa (p=${p})`;
-    } else if (tipo === "entre") {
-        const a = parseFloat(document.getElementById('norm_a').value);
-        const b = parseFloat(document.getElementById('norm_b').value);
-        if (isNaN(a) || isNaN(b)) {
-            alert("Ingresa los límites a y b.");
-            return;
+
+        // Datos del área sombreada
+        let k, a, b;
+        const xFill = [], yFill = [];
+
+        if(type === 'entre' || type === 'colas') {
+            a = parseFloat(document.getElementById('nm_val_a').value);
+            b = parseFloat(document.getElementById('nm_val_b').value);
+            
+            for(let i = startX; i <= endX; i += step) {
+                let inside = (i >= a && i <= b);
+                if ((type === 'entre' && inside) || (type === 'colas' && !inside)) {
+                    xFill.push(i); yFill.push(NormalModule.pdf(i, mu, sigma));
+                } else {
+                    // Truco para romper el relleno en las colas
+                    if (type === 'colas' && inside) { xFill.push(i); yFill.push(0); }
+                }
+            }
+        } else {
+            k = parseFloat(document.getElementById('nm_val_k').value);
+            for(let i = startX; i <= endX; i += step) {
+                if ((type === 'menor' && i <= k) || (type === 'mayor' && i >= k)) {
+                    xFill.push(i); yFill.push(NormalModule.pdf(i, mu, sigma));
+                }
+            }
         }
-        pFinal = cdfNormal((b-mu)/sigma) - cdfNormal((a-mu)/sigma);
-        configSombreado.val1 = a; configSombreado.val2 = b;
-        htmlContenido = `<p><b>Rango:</b> P(${a} < X < ${b})</p>\\[ P = ${pFinal.toFixed(6)} \\]`;
-        tituloHistorial = `Normal (${a} a ${b})`;
-    } else {
-        const x = parseFloat(document.getElementById('norm_x').value);
-        if (isNaN(x)) {
-            alert("Ingresa el valor de x.");
-            return;
-        }
-        const z = (x - mu) / sigma;
-        pFinal = (tipo === "menor") ? cdfNormal(z) : 1 - cdfNormal(z);
-        configSombreado.val1 = x;
-        htmlContenido = `<p><b>Probabilidad:</b> P(X ${tipo==='menor'?'<':'>'} ${x})</p>\\[ P = ${pFinal.toFixed(6)} \\]`;
-        tituloHistorial = `Normal (X ${tipo==='menor'?'<':'>'} ${x})`;
-    }
 
-    const resHTMLBase = `
-        <div style="font-size: 0.9em; border-left: 4px solid #3498db; padding-left: 10px;">
-            ${htmlContenido}
-            <p style="color:#27ae60; font-weight:bold;">Resultado: ${(pFinal * 100).toFixed(4)}%</p>
-        </div>`;
+        const traceCurve = {
+            x: x, y: y, mode: 'lines', line: { color: '#1a365d', width: 2 },
+            name: 'Densidad'
+        };
 
-    resDiv.innerHTML = resHTMLBase;
-    resDiv.style.display = "block";
-    if (window.MathJax) MathJax.typesetPromise([resDiv]);
+        const traceArea = {
+            x: xFill, y: yFill, fill: 'tozeroy', fillcolor: 'rgba(43, 108, 176, 0.4)', 
+            line: { width: 0 }, name: 'Probabilidad', hoverinfo: 'none'
+        };
 
-    dibujarCampana(mu, sigma, configSombreado, function(imgBase64) {
-        const htmlConImagen = `
-            ${resHTMLBase}
-            <div style="text-align:center; margin-top:5px;">
-                <img src="${imgBase64}" style="width: 100%; max-width: 300px; border: 1px solid #ddd; padding: 5px; background: #fff;">
+        const plotData = {
+            data: [traceCurve, traceArea],
+            layout: { 
+                title: { text: `Curva Normal (μ=${mu}, σ=${sigma})`, font: { size: 12 } },
+                xaxis: { title: 'X', showgrid:true },
+                yaxis: { showgrid:false, showticklabels: false }, 
+                
+                // MEDIDAS FIJAS PARA IMPRESIÓN (FOTO)
+                autosize: false, 
+                width: 400, height: 300,
+                margin: { l:20, r:20, t:40, b:30 },
+                showlegend: false
+            }
+        };
+
+        // Generamos un pequeño resumen HTML para acompañar la curva
+        const summaryHTML = `
+            <div style="padding:10px; font-size:0.9rem;">
+                <p><strong>Parámetros:</strong></p>
+                <ul style="padding-left:20px; color:#4a5568;">
+                    <li>Media ($\\mu$): ${mu}</li>
+                    <li>Desv. ($\\sigma$): ${sigma}</li>
+                </ul>
+                <div style="margin-top:15px; padding:10px; background:#ebf8ff; border-radius:5px; color:#2c5282; font-size:0.85rem;">
+                    <i class="fa-solid fa-info-circle"></i> El área sombreada en azul representa la probabilidad calculada.
+                </div>
             </div>`;
-        guardarEnHistorial(tituloHistorial, htmlConImagen);
-    });
-}
+
+        Core.addReportItem({
+            title: "Gráfico de Campana",
+            params: `μ=${mu}, σ=${sigma}`,
+            tableHTML: summaryHTML, // Usamos la columna izquierda para texto
+            plot: plotData, // FOTO AUTOMÁTICA
+            result: null
+        });
+    }
+};
+
+if (typeof Core !== 'undefined') { Core.registerModule('normal', NormalModule); }
