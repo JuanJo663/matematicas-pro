@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <link rel="stylesheet" href="styles.css">
     
     <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
@@ -26,11 +25,7 @@
                 displayMath: [['$$', '$$'], ['\\[', '\\]']]
             },
             svg: { fontCache: 'global' },
-            startup: {
-                pageReady: () => {
-                    return MathJax.startup.defaultPageReady();
-                }
-            }
+            startup: { pageReady: () => MathJax.startup.defaultPageReady() }
         };
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
@@ -44,119 +39,66 @@
                 <p>Plataforma de Análisis Modular</p>
             </div>
             <div class="header-actions">
-                <button class="btn-primary" onclick="Core.printReport()" title="Descargar PDF o Imprimir">
-                    <i class="fa-solid fa-file-pdf"></i> Generar Reporte
-                </button>
-                <button class="btn-secondary" onclick="Core.clearReport()" title="Borrar todo el historial">
-                    <i class="fa-solid fa-trash-can"></i> Limpiar
-                </button>
+                <button class="btn-primary" onclick="Core.printReport()"><i class="fa-solid fa-file-pdf"></i> Generar Reporte</button>
+                <button class="btn-secondary" onclick="Core.clearReport()"><i class="fa-solid fa-trash-can"></i> Limpiar</button>
             </div>
         </div>
     </header>
 
     <div class="container">
-        
-        <div class="ad-container no-print" id="ad-top" style="
-    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); 
-    border: 1px solid #bae6fd; 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 15px 20px;
-    border-radius: 12px;
-    flex-wrap: wrap;
-    gap: 15px;">
-
-    <div style="display: flex; align-items: center; gap: 15px;">
-        <div style="
-            background: #fff; 
-            width: 50px; height: 50px; 
-            border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            color: #0284c7; font-size: 1.5rem;">
-            <i class="fa-solid fa-chalkboard-user"></i>
+        <div class="ad-container no-print promo-banner" id="ad-top">
+            <div class="promo-content">
+                <div class="promo-icon"><i class="fa-solid fa-chalkboard-user"></i></div>
+                <div class="promo-text">
+                    <h3>¿Necesitas ayuda con Matemáticas o Estadística?</h3>
+                    <p>Agenda una tutoría personalizada y domina estos temas hoy mismo.</p>
+                </div>
+            </div>
+            <a href="https://wa.me/573004535859?text=Hola,%20vi%20tu%20Laboratorio%20Estadístico%20y%20me%20interesa%20una%20tutoría." target="_blank" class="promo-btn">
+                <i class="fa-brands fa-whatsapp"></i> <span>Agendar Clase</span>
+            </a>
         </div>
-        <div>
-            <h3 style="margin: 0; font-size: 1.1rem; color: #0c4a6e; font-weight: 700;">
-                ¿Necesitas ayuda con Matemáticas o Estadística?
-            </h3>
-            <p style="margin: 0; font-size: 0.9rem; color: #475569;">
-                Agenda una tutoría personalizada y domina estos temas hoy mismo.
-            </p>
-        </div>
-    </div>
-
-    <a href="https://wa.me/573004535859?text=Hola,%20vi%20tu%20Laboratorio%20Estadístico%20y%20me%20interesa%20una%20tutoría." 
-       target="_blank" 
-       style="
-        background-color: #25D366; 
-        color: white; 
-        text-decoration: none; 
-        padding: 10px 20px; 
-        border-radius: 30px; 
-        font-weight: 600; 
-        display: inline-flex; 
-        align-items: center; 
-        gap: 8px; 
-        box-shadow: 0 4px 6px -1px rgba(37, 211, 102, 0.4);
-        transition: transform 0.2s ease;">
-        <i class="fa-brands fa-whatsapp" style="font-size: 1.2rem;"></i>
-        <span>Agendar Clase</span>
-    </a>
-
-</div>
 
         <section class="control-panel no-print">
             <label for="module-selector"><i class="fa-solid fa-layer-group"></i> Herramienta:</label>
             <select id="module-selector">
-    <option value="" disabled selected>Seleccione un módulo...</option>
-    
-    <optgroup label="Distribuciones Discretas">
-        <option value="binomial">Distribución Binomial</option>
-        <option value="poisson">Distribución Poisson</option>
-        <option value="geometric">Distribución Geométrica</option>
-        <option value="hypergeometric">Distribución Hipergeométrica</option>
-    </optgroup>
-
-    <optgroup label="Distribuciones Continuas">
-    <option value="normal">Distribución Normal (Gaussiana)</option>
-    </optgroup>
-
-    <optgroup label="Herramientas">
-        <option value="counting">Técnicas de Conteo</option>
-    </optgroup>
-</select>
+                <option value="" disabled selected>Seleccione un módulo...</option>
+                <optgroup label="Distribuciones Discretas">
+                    <option value="binomial">Distribución Binomial</option>
+                    <option value="poisson">Distribución Poisson</option>
+                    <option value="geometric">Distribución Geométrica</option>
+                    <option value="hypergeometric">Distribución Hipergeométrica</option>
+                </optgroup>
+                <optgroup label="Distribuciones Continuas">
+                    <option value="normal">Distribución Normal (Gaussiana)</option>
+                </optgroup>
+                <optgroup label="Herramientas">
+                    <option value="counting">Técnicas de Conteo</option>
+                </optgroup>
+            </select>
         </section>
 
         <section id="workspace" class="workspace no-print">
             <div class="empty-state">
                 <i class="fa-solid fa-calculator" style="font-size: 3rem; color: #cbd5e0; margin-bottom: 15px;"></i>
-                <p>Selecciona una herramienta del menú superior para comenzar.</p>
+                <p>Selecciona una herramienta para comenzar.</p>
             </div>
         </section>
-
-        <div class="ad-container no-print" id="ad-middle" style="display:none;">
-            <span class="ad-label">Publicidad</span>
-        </div>
 
         <div class="print-header-only">
             <h2>Reporte de Análisis Estadístico</h2>
             <div class="print-meta">
-                <p><strong>Fecha de Generación:</strong> <span id="print-date"></span></p>
+                <p><strong>Fecha:</strong> <span id="print-date"></span></p>
                 <p><strong>Estudiante:</strong> ____________________________________________</p>
-                <p><strong>Materia:</strong> ____________________________________________</p>
             </div>
             <hr>
         </div>
 
-        <section id="report-section" class="report-feed">
-            </section>
+        <section id="report-section" class="report-feed"></section>
 
         <div class="print-footer-only">
             <p>Documento generado con Laboratorio Estadístico Pro - Uso Académico</p>
         </div>
-
     </div>
 
     <footer class="web-footer no-print">
@@ -165,17 +107,12 @@
             <span class="separator">|</span>
             <a href="https://www.buymeacoffee.com/juanjose66f" target="_blank"><i class="fa-solid fa-mug-hot"></i> Donar</a>
         </div>
-        <p class="copyright">© 2026 Laboratorio Estadístico. Todos los derechos reservados.</p>
+        <p class="copyright">© 2026 Laboratorio Estadístico.</p>
     </footer>
 
     <div class="floating-actions no-print">
-        <a href="https://wa.me/573004535859" target="_blank" class="float-btn whatsapp" title="Contáctame por WhatsApp">
-            <i class="fa-brands fa-whatsapp"></i>
-        </a>
-        <a href="https://www.buymeacoffee.com/juanjose66f" target="_blank" class="float-btn coffee" title="Invítame un café">
-            <i class="fa-solid fa-mug-hot"></i>
-            <span class="btn-text">Apoyar</span>
-        </a>
+        <a href="https://wa.me/573004535859" target="_blank" class="float-btn whatsapp"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="https://www.buymeacoffee.com/juanjose66f" target="_blank" class="float-btn coffee"><i class="fa-solid fa-mug-hot"></i> <span class="btn-text">Apoyar</span></a>
     </div>
 
     <script src="core.js"></script>
@@ -185,9 +122,5 @@
     <script src="modules/hypergeometric.js"></script>
     <script src="modules/counting.js"></script>
     <script src="modules/normal.js"></script>
-
-
-</body>
-    
 </body>
 </html>
